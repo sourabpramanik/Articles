@@ -50,6 +50,47 @@ Add lucide-react for icons
 ```bash
 npm install lucide-react
 ```
+## Run SurrealDB server using docker
+```bash
+docker run --rm --pull always -p 8000:8000 -u root  -v /local-dir:/container-dir surrealdb/surrealdb:latest start --auth --user root --pass root file:/container-dir/dev.db
+```
+Now the SurrealDB server is running on port 8000. The database name is **dev**, username is **root** and password is also **root** for this demo. 
 
+The above docker command has a docker folder specified which will let SurrealDb server use on-disk storage to store and persist any data.  
 
+## Add NextAuth and configure SurrealDB in our NextJS project
+
+To setup NextAuth I will install some packages
+
+```bash
+npm install next-auth
+npm install @auth/surrealdb-adapter surrealdb.js
+```
+In lib directory create a new file surrealdb.ts and add the below code
+```typescript
+import { Surreal } from "surrealdb.js";
+
+const connectionString = "http://0.0.0.0:8000"
+const user = "root"
+const pass = "root"
+const ns = "dev"
+const db = "dev"
+
+const clientPromise = new Promise<Surreal>(async (resolve, reject) => {
+    const database = new Surreal();
+    try {
+        await database.connect(`${connectionString}/rpc`, {
+            ns, db, auth: { user, pass }
+        })
+        resolve(database)
+    } catch (e) {
+        reject(e)
+    }
+})
+export default clientPromise
+```
+
+This configuration will connect the application to SurrealDB instance running on port 8000.
+
+In app/api/auth create [...nextauth] directory and inside that directory create route.ts file
 
